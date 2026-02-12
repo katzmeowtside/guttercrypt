@@ -5,48 +5,48 @@ Local secrets manager with KatBot personality. AES-256 encrypted vault for your 
 ## Install
 
 ```bash
-npm install -g g-crypt
+npm install -g guttahcrypt
 ```
 
 ### Termux (Android)
 
 ```bash
 pkg install nodejs-lts
-npm install -g g-crypt
+npm install -g guttahcrypt
 ```
 
 ## Usage
 
 ```bash
 # Create a vault in your project
-g-crypt init
+guttahcrypt init
 
 # Encrypt your .env file
-g-crypt store
+guttahcrypt store
 
 # Encrypt a specific file
-g-crypt store .env.production
+guttahcrypt store .env.production
 
 # List stored keys (no values shown)
-g-crypt list
+guttahcrypt list
 
 # Restore .env from vault
-g-crypt inject
+guttahcrypt inject
 
 # Delete plaintext .env (vault keeps encrypted copy)
-g-crypt lock
+guttahcrypt lock
 
 # Restore .env from vault
-g-crypt unlock
+guttahcrypt unlock
 
 # Destroy the vault completely
-g-crypt nuke
+guttahcrypt nuke
 
 # Ask KatBot AI about secrets management
-g-crypt ask "what is the best way to manage API keys?"
+guttahcrypt ask "what is the best way to manage API keys?"
 
 # Easter egg
-g-crypt meow
+guttahcrypt meow
 ```
 
 ## Cloud Sync
@@ -55,13 +55,13 @@ Push and pull your encrypted vault across devices using a secret GitHub Gist. Yo
 
 ```bash
 # Push vault to a new secret Gist (or update existing)
-g-crypt push
+guttahcrypt push
 
 # Pull vault from linked Gist
-g-crypt pull
+guttahcrypt pull
 
 # Link to an existing Gist on a new device
-g-crypt link <gist-id>
+guttahcrypt link <gist-id>
 ```
 
 ### GitHub Token Setup
@@ -83,12 +83,12 @@ gh auth login
 
 ```bash
 # Device A — push your vault
-g-crypt push
+guttahcrypt push
 # → creates secret Gist, prints Gist ID
 
 # Device B — link and pull
-g-crypt link <gist-id>
-g-crypt pull
+guttahcrypt link <gist-id>
+guttahcrypt pull
 # → vault synced to new device
 ```
 
@@ -98,30 +98,38 @@ Save notes and conversation history to KatBot's encrypted memory. Memory is incl
 
 ```bash
 # Save a note
-g-crypt remember "always use separate API keys per environment"
+guttahcrypt remember "always use separate API keys per environment"
 
 # Show all stored memories
-g-crypt recall
+guttahcrypt recall
 
 # Delete a note (interactive picker)
-g-crypt forget
+guttahcrypt forget
 ```
 
 When memory exists, `ask` will prompt for your passphrase to load context. Conversations are automatically saved (capped at 20).
 
 ## AI Chat (Optional)
 
-The `ask` command uses Google Gemini for AI-powered answers in KatBot's voice. Set your API key:
+The `ask` command uses KatBot AI for snarky, helpful answers. Supports multiple providers — no extra dependencies needed (uses built-in `fetch`).
 
 ```bash
-export GEMINI_API_KEY=your-key-here
+# Interactive setup — pick a provider, enter API key
+guttahcrypt config
 ```
 
-Install the optional dependency:
+### Supported Providers
 
-```bash
-npm install @google/genai
-```
+| Provider | Default Model | Env Var |
+|----------|--------------|---------|
+| Gemini | gemini-2.0-flash | `GEMINI_API_KEY` |
+| Groq | llama-3.3-70b-versatile | `GROQ_API_KEY` |
+| OpenAI | gpt-4o-mini | `OPENAI_API_KEY` |
+| Custom | (you choose) | `AI_API_KEY` |
+
+Custom supports any OpenAI-compatible API (Together, Mistral, Ollama, etc.).
+
+You can also set keys via environment variables instead of `guttahcrypt config`.
 
 ## How It Works
 

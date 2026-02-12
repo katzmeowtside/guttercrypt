@@ -3,21 +3,24 @@
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { katbot } from '../lib/katbot.js';
+import fs from 'node:fs';
 import {
   createVault,
   storeSecrets,
+  storeRawText,
   injectSecrets,
   listKeys,
   lockVault,
   unlockVault,
   nukeVault,
   vaultExists,
+  vaultInitialized,
 } from '../lib/vault.js';
 
 const program = new Command();
 
 program
-  .name('g-crypt')
+  .name('guttahcrypt')
   .description('🐱 local secrets manager — no cloud, no bs')
   .version('1.0.0')
   .addHelpText('before', katbot.banner());
@@ -27,27 +30,27 @@ program
   .command('init')
   .description('Create encrypted vault in current project')
   .action(() => {
-    if (vaultExists()) {
+    if (vaultInitialized()) {
       console.log(katbot.initAlreadyExists());
       return;
     }
-    const created = createVault();
-    if (created) {
-      console.log(katbot.initSuccess());
-    } else {
-      console.log(katbot.initAlreadyExists());
-    }
+    createVault();
+    console.log(katbot.initSuccess());
   });
 
 // --- store ---
 program
-  .command('store [file]')
-  .description('Encrypt a file into the vault (default: .env)')
-  .action(async (file = '.env') => {
-    if (!vaultExists()) {
+  .command('store [input...]')
+  .description('Encrypt a file or raw text into the vault (default: .env)')
+  .action(async (input) => {
+    if (!vaultInitialized()) {
       console.log(katbot.noVault());
       return;
     }
+
+    const joined = input.length > 0 ? input.join(' ') : '';
+    const isFile = input.length <= 1 && fs.existsSync(joined || '.env');
+    const file = joined || '.env';
 
     const { passphrase } = await inquirer.prompt([
       {
@@ -72,13 +75,22 @@ program
       return;
     }
 
-    const result = storeSecrets(file, passphrase);
-    if (result.success) {
-      console.log(katbot.storeSuccess(result.keyCount));
-    } else if (result.error === 'file_not_found') {
-      console.log(katbot.storeNoFile(file));
+    if (isFile) {
+      const result = storeSecrets(file, passphrase);
+      if (result.success) {
+        console.log(katbot.storeSuccess(result.keyCount));
+      } else if (result.error === 'file_not_found') {
+        console.log(katbot.storeNoFile(file));
+      } else {
+        console.log(katbot.genericError('something went wrong storing secrets.'));
+      }
     } else {
-      console.log(katbot.genericError('something went wrong storing secrets.'));
+      const result = storeRawText(joined, passphrase);
+      if (result.success) {
+        console.log(katbot.storeRawSuccess());
+      } else {
+        console.log(katbot.genericError('something went wrong storing secrets.'));
+      }
     }
   });
 
@@ -124,7 +136,9 @@ program
     // Try meta file first (no passphrase needed)
     const result = listKeys(null);
     if (result.success) {
-      if (result.keys.length === 0) {
+      if (result.rawText) {
+        console.log(katbot.listRawText());
+      } else if (result.keys.length === 0) {
         console.log(katbot.listEmpty());
       } else {
         console.log(katbot.listHeader());
@@ -214,7 +228,7 @@ program
   .command('nuke')
   .description('Destroy vault completely')
   .action(async () => {
-    if (!vaultExists()) {
+    if (!vaultInitialized()) {
       console.log(katbot.noVault());
       return;
     }
@@ -284,15 +298,105 @@ program
           // silently fail — don't break the ask flow
         }
       }
-    } else if (result.error === 'no_api_key') {
+    } else if (result.error === 'no_api_key' || result.error === 'no_provider') {
       console.log(katbot.aiNoKey());
-    } else if (result.error === 'no_module') {
-      console.log(katbot.genericError(
-        'optional dependency @google/genai not installed. run: npm install @google/genai'
-      ));
     } else {
       console.log(katbot.aiError(result.message || 'unknown error'));
     }
+  });
+
+// --- config ---
+program
+  .command('config')
+  .description('Interactive setup for AI provider and GitHub sync')
+  .action(async () => {
+    const { readConfig, writeConfig } = await import('../lib/config.js');
+    const { PROVIDERS } = await import('../lib/ai.js');
+
+    const config = readConfig();
+
+    const providerChoices = Object.entries(PROVIDERS).map(([key, p]) => ({
+      name: `${p.name} (${p.defaultModel})`,
+      value: key,
+    }));
+    providerChoices.push({ name: 'Custom (any OpenAI-compatible API)', value: 'custom' });
+
+    const { provider } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'provider',
+        message: '🤖 AI provider:',
+        choices: providerChoices,
+        default: config.provider || 'gemini',
+      },
+    ]);
+
+    const preset = PROVIDERS[provider];
+
+    let baseUrl = preset ? preset.baseUrl : '';
+    let defaultModel = preset ? preset.defaultModel : '';
+
+    if (provider === 'custom') {
+      const customAnswers = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'baseUrl',
+          message: '🌐 Base URL (OpenAI-compatible, e.g. https://api.example.com/v1):',
+          default: config.baseUrl || '',
+          validate: (v) => v.startsWith('http') || 'must be a valid URL',
+        },
+        {
+          type: 'input',
+          name: 'model',
+          message: '🧠 Model name:',
+          default: config.model || '',
+          validate: (v) => v.length > 0 || 'model name required',
+        },
+      ]);
+      baseUrl = customAnswers.baseUrl;
+      defaultModel = customAnswers.model;
+    }
+
+    const { apiKey } = await inquirer.prompt([
+      {
+        type: 'password',
+        name: 'apiKey',
+        message: `🔑 API key${preset ? ` (or set ${preset.envVar} env var)` : ''}:`,
+        mask: '*',
+        default: config.apiKey || '',
+      },
+    ]);
+
+    const { githubToken } = await inquirer.prompt([
+      {
+        type: 'password',
+        name: 'githubToken',
+        message: '🐙 GitHub token for sync (optional, or set GITHUB_TOKEN env var):',
+        mask: '*',
+        default: config.githubToken || '',
+      },
+    ]);
+
+    const newConfig = { ...config, provider };
+
+    if (provider === 'custom') {
+      newConfig.baseUrl = baseUrl;
+      newConfig.model = defaultModel;
+    } else {
+      delete newConfig.baseUrl;
+      delete newConfig.model;
+    }
+
+    if (apiKey) newConfig.apiKey = apiKey;
+    else delete newConfig.apiKey;
+
+    if (githubToken) newConfig.githubToken = githubToken;
+    else delete newConfig.githubToken;
+
+    writeConfig(newConfig);
+
+    const displayName = preset ? preset.name : `custom (${baseUrl})`;
+    console.log(katbot.configSaved(displayName));
   });
 
 // --- push ---
