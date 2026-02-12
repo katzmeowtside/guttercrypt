@@ -1,10 +1,10 @@
 {
-  "name": "guttercrypt",
+  "name": "g-crypt",
   "version": "1.0.0",
   "description": "CLI secrets manager with KatBot personality. AES-256 encrypted vault for your .env files. No cloud, no subscriptions.",
   "main": "bin/guttercrypt.js",
   "bin": {
-    "guttercrypt": "bin/guttercrypt.js"
+    "g-crypt": "bin/guttercrypt.js"
   },
   "scripts": {
     "start": "node bin/guttercrypt.js"

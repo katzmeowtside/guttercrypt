@@ -5,48 +5,48 @@ Local secrets manager with KatBot personality. AES-256 encrypted vault for your 
 ## Install
 
 ```bash
-npm install -g guttercrypt
+npm install -g g-crypt
 ```
 
 ### Termux (Android)
 
 ```bash
 pkg install nodejs-lts
-npm install -g guttercrypt
+npm install -g g-crypt
 ```
 
 ## Usage
 
 ```bash
 # Create a vault in your project
-guttercrypt init
+g-crypt init
 
 # Encrypt your .env file
-guttercrypt store
+g-crypt store
 
 # Encrypt a specific file
-guttercrypt store .env.production
+g-crypt store .env.production
 
 # List stored keys (no values shown)
-guttercrypt list
+g-crypt list
 
 # Restore .env from vault
-guttercrypt inject
+g-crypt inject
 
 # Delete plaintext .env (vault keeps encrypted copy)
-guttercrypt lock
+g-crypt lock
 
 # Restore .env from vault
-guttercrypt unlock
+g-crypt unlock
 
 # Destroy the vault completely
-guttercrypt nuke
+g-crypt nuke
 
 # Ask KatBot AI about secrets management
-guttercrypt ask "what is the best way to manage API keys?"
+g-crypt ask "what is the best way to manage API keys?"
 
 # Easter egg
-guttercrypt meow
+g-crypt meow
 ```
 
 ## Cloud Sync
@@ -55,13 +55,13 @@ Push and pull your encrypted vault across devices using a secret GitHub Gist. Yo
 
 ```bash
 # Push vault to a new secret Gist (or update existing)
-guttercrypt push
+g-crypt push
 
 # Pull vault from linked Gist
-guttercrypt pull
+g-crypt pull
 
 # Link to an existing Gist on a new device
-guttercrypt link <gist-id>
+g-crypt link <gist-id>
 ```
 
 ### GitHub Token Setup
@@ -83,12 +83,12 @@ gh auth login
 
 ```bash
 # Device A — push your vault
-guttercrypt push
+g-crypt push
 # → creates secret Gist, prints Gist ID
 
 # Device B — link and pull
-guttercrypt link <gist-id>
-guttercrypt pull
+g-crypt link <gist-id>
+g-crypt pull
 # → vault synced to new device
 ```
 
@@ -98,13 +98,13 @@ Save notes and conversation history to KatBot's encrypted memory. Memory is incl
 
 ```bash
 # Save a note
-guttercrypt remember "always use separate API keys per environment"
+g-crypt remember "always use separate API keys per environment"
 
 # Show all stored memories
-guttercrypt recall
+g-crypt recall
 
 # Delete a note (interactive picker)
-guttercrypt forget
+g-crypt forget
 ```
 
 When memory exists, `ask` will prompt for your passphrase to load context. Conversations are automatically saved (capped at 20).

@@ -17,7 +17,7 @@ import {
 const program = new Command();
 
 program
-  .name('guttercrypt')
+  .name('g-crypt')
   .description('🐱 local secrets manager — no cloud, no bs')
   .version('1.0.0')
   .addHelpText('before', katbot.banner());
