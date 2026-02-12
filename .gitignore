@@ -1,0 +1,8 @@
+node_modules/
+.guttercrypt/
+.env
+.env.*
+*.enc
+*.log
+.DS_Store
+Thumbs.db

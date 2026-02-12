@@ -1,0 +1,36 @@
+{
+  "name": "guttercrypt",
+  "version": "1.0.0",
+  "description": "CLI secrets manager with KatBot personality. AES-256 encrypted vault for your .env files. No cloud, no subscriptions.",
+  "main": "bin/guttercrypt.js",
+  "bin": {
+    "guttercrypt": "bin/guttercrypt.js"
+  },
+  "scripts": {
+    "start": "node bin/guttercrypt.js"
+  },
+  "keywords": [
+    "secrets",
+    "env",
+    "encryption",
+    "vault",
+    "cli",
+    "aes-256",
+    "dotenv",
+    "termux"
+  ],
+  "author": "katzmeowtside",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "inquirer": "^9.3.0"
+  },
+  "optionalDependencies": {
+    "@google/genai": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "type": "module"
+}
